@@ -1,0 +1,30 @@
+# Entornos virtuales de Python (Evita subir gigas de librerías locales)
+.venv/
+venv/
+ENV/
+env/
+
+# Archivos de configuración con credenciales sensibles (¡Seguridad ante todo!)
+.env
+.env.local
+
+# Caché de ejecución de Python
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Configuraciones locales de editores de código (VS Code, Postman)
+.vscode/
+.postman/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Archivos del sistema operativo
+Thumbs.db
+Desktop.ini
+.DS_Store

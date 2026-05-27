@@ -59,7 +59,7 @@ def procesar_y_crear_pedido(usuario_contexto):
     except requests.exceptions.RequestException:
         return jsonify({"error": "Inventario fuera de linea tras reintentos catastroficos."}), 503
 
-    # 3. Registrar el pedido en la base de datos local
+   # 3. Registrar el pedido en la base de datos local
     with obtener_conexion_db() as conexion:
         with conexion.cursor() as cursor:
             cursor.execute("""
@@ -69,9 +69,29 @@ def procesar_y_crear_pedido(usuario_contexto):
             pedido_id = cursor.fetchone()[0]
         conexion.commit()
 
-    return jsonify({
-        "pedido_id": pedido_id,
-        "estado": "PROCESADO",
-        "total": total_calculado,
-        "mensaje": "El Mamut ha sido evitado. Pedido registrado."
-    }), 201
+    # 4. Comunicar al servicio de logística para agendar el despacho del hielo, con manejo de fallos
+    try: #Si el servicio de logística no responde, el pedido se creó pero la logística se agendará después.
+        url_delivery = "http://delivery-service:5004/envios"
+        respuesta_delivery = requests.post(url_delivery, json={"pedido_id": pedido_id}, headers=headers_internos, timeout=3)
+        
+        if respuesta_delivery.status_code == 201: #Logística agendada correctamente
+            datos_envio = respuesta_delivery.json()
+            return jsonify({
+                "pedido_id": pedido_id,
+                "estado": "PROCESADO",
+                "total": total_calculado,
+                "logistica": {
+                    "envio_id": datos_envio["envio_id"],
+                    "repartidor": datos_envio["repartidor"],
+                    "estado": datos_envio["estado_logistica"]
+                },
+                "mensaje": "Pedido creado y pinguino repartidor asignado correctamente."
+            }), 201
+    except requests.exceptions.RequestException:
+        # Falla con gracia: El pedido se creó pero logística se agendará después
+        return jsonify({
+            "pedido_id": pedido_id,
+            "estado": "PROCESADO_PENDIENTE_LOGISTICA",
+            "total": total_calculado,
+            "mensaje": "Pedido registrado pero el camion de hielo no responde. Reintentando internamente."
+        }), 202

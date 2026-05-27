@@ -1,0 +1,79 @@
+version: '3.8'
+
+networks:
+  red-glacial:
+    driver: bridge
+
+services:
+  # --- INFRAESTRUCTURA DE BASES DE DATOS ---
+  db-auth:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user_auth
+      POSTGRES_PASSWORD: ${DB_PASSWORD_GLOBAL}
+      POSTGRES_DB: db_auth
+    networks:
+      - red-glacial
+
+  db-inventory:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user_inventory
+      POSTGRES_PASSWORD: ${DB_PASSWORD_GLOBAL}
+      POSTGRES_DB: db_inventory
+    networks:
+      - red-glacial
+
+  db-orders:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user_orders
+      POSTGRES_PASSWORD: ${DB_PASSWORD_GLOBAL}
+      POSTGRES_DB: db_orders
+    networks:
+      - red-glacial
+
+  # --- MICROSERVICIOS APLICATIVOS ---
+  auth-service:
+    build:
+      context: ./auth-service
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - DATABASE_URL=postgresql://user_auth:${DB_PASSWORD_GLOBAL}@db-auth:5432/db_auth
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - db-auth
+    networks:
+      - red-glacial
+
+  inventory-service:
+    build:
+      context: ./inventory-service
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - DATABASE_URL=postgresql://user_inventory:${DB_PASSWORD_GLOBAL}@db-inventory:5432/db_inventory
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - db-inventory
+    networks:
+      - red-glacial
+
+  orders-service:
+    build:
+      context: ./orders-service
+    ports:
+      - "5003:5003"
+    environment:
+      - PORT=5003
+      - DATABASE_URL=postgresql://user_orders:${DB_PASSWORD_GLOBAL}@db-orders:5432/db_orders
+      - INVENTORY_SERVICE_URL=http://inventory-service:5002
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - db-orders
+      - inventory-service
+    networks:
+      - red-glacial

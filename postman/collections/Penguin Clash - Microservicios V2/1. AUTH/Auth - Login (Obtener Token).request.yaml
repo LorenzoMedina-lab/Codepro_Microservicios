@@ -1,0 +1,11 @@
+$kind: http-request
+url: http://127.0.0.1:5001/auth/login
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "username": "lorenzo_dev",
+      "password": "mi_clave_segura"
+    }
+order: 2000

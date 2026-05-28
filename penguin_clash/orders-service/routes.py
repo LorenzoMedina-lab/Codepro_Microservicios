@@ -87,11 +87,54 @@ def procesar_y_crear_pedido(usuario_contexto):
                 },
                 "mensaje": "Pedido creado y pinguino repartidor asignado correctamente."
             }), 201
-    except requests.exceptions.RequestException:
-        # Falla con gracia: El pedido se creó pero logística se agendará después
+    except requests.exceptions.RequestException: 
+        # El pedido se creó pero logística se agendará después
         return jsonify({
             "pedido_id": pedido_id,
             "estado": "PROCESADO_PENDIENTE_LOGISTICA",
             "total": total_calculado,
             "mensaje": "Pedido registrado pero el camion de hielo no responde. Reintentando internamente."
-        }), 202
+        }), 202 # Devolvemos 202 para indicar que el pedido se creó pero la logística está pendiente, y el sistema reintentará agendarla internamente.
+
+# Endpoint para listar todos los pedidos, protegido por autenticación JWT.
+@orders_blueprint.route('/pedidos', methods=['GET'])
+@requerir_token_autenticado
+def listar_todos_los_pedidos(usuario_contexto):
+    try:
+        with obtener_conexion_db() as conexion:
+            with conexion.cursor() as cursor:
+                cursor.execute("SELECT id, usuario_id, producto_id, cantidad, estado FROM pedidos ORDER BY id ASC;")
+                pedidos = cursor.fetchall()
+                
+        lista_pedidos = []
+        for p in pedidos:
+            lista_pedidos.append({
+                "id": p[0],
+                "usuario_id": p[1],
+                "producto_id": p[2],
+                "cantidad": p[3],
+                "estado": p[4]
+            })
+        return jsonify(lista_pedidos), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al consultar pedidos: {str(e)}"}), 500
+
+# Endpoint para eliminar un pedido específico por su ID, protegido por autenticación JWT.
+@orders_blueprint.route('/pedidos/<int:pedido_id>', methods=['DELETE'])
+@requerir_token_autenticado
+def eliminar_pedido(pedido_id, usuario_contexto):
+    try:
+        with obtener_conexion_db() as conexion:
+            with conexion.cursor() as cursor:
+                # Verificamos si el pedido existe
+                cursor.execute("SELECT id FROM pedidos WHERE id = %s;", (pedido_id,))
+                if not cursor.fetchone():
+                    return jsonify({"error": "Pedido no encontrado"}), 404
+                    
+                # Procedemos al borrado físico en db_orders
+                cursor.execute("DELETE FROM pedidos WHERE id = %s;", (pedido_id,))
+            conexion.commit()
+            
+        return jsonify({"mensaje": f"Pedido ID {pedido_id} eliminado correctamente de la base de datos"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al eliminar el pedido: {str(e)}"}), 500

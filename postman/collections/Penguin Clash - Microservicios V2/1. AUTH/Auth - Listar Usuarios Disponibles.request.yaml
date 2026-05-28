@@ -1,0 +1,8 @@
+$kind: http-request
+url: http://127.0.0.1:5001/auth/usuarios
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: PEGAR_AQUI_TU_JWT_TOKEN
+order: 3000

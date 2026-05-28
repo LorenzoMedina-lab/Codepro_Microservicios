@@ -1,0 +1,15 @@
+$kind: http-request
+url: http://localhost:5003/pedidos
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "producto_id": 1,
+      "cantidad": 2
+    }
+auth:
+  type: bearer
+  credentials:
+    token: PEGAR_AQUI_TU_JWT_TOKEN
+order: 5000

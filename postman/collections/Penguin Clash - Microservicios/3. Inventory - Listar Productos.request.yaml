@@ -1,0 +1,8 @@
+$kind: http-request
+url: http://localhost:5002/productos
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: PEGAR_AQUI_TU_JWT_TOKEN
+order: 3000

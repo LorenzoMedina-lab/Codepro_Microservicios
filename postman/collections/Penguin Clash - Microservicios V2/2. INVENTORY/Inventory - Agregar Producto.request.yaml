@@ -1,0 +1,16 @@
+$kind: http-request
+url: http://127.0.0.1:5002/productos
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Nitrógeno Líquido Antifusión",
+      "stock": 50,
+      "precio": 89.99
+    }
+auth:
+  type: bearer
+  credentials:
+    token: PEGAR_AQUI_TU_JWT_TOKEN
+order: 1000

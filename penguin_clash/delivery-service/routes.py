@@ -33,3 +33,29 @@ def agendar_despacho_de_hielo(usuario_contexto):
         "estado_logistica": "PREPARANDO_CARGA",
         "mensaje": "Logistica activada. El hielo esta en camino antes de licuarse."
     }), 201
+
+@delivery_blueprint.route('/envios', methods=['GET'])
+@requerir_token_autenticado  # Barrera de seguridad JWT activa
+def listar_todos_los_envios(usuario_contexto): # Recibe el contexto del token de forma obligatoria
+    try:
+        lista_envios = []
+        
+        with obtener_conexion_db() as conexion:
+            with conexion.cursor() as cursor:
+                # columnas reales 'repartidor_asignado' y 'estado_envio'
+                cursor.execute("SELECT id, pedido_id, repartidor_asignado, estado_envio FROM envios ORDER BY id ASC;")
+                envios = cursor.fetchall()
+                
+                # Se procesa la lista dentro del contexto seguro de la conexión
+                for e in envios:
+                    lista_envios.append({
+                        "id": e[0],
+                        "pedido_id": e[1],
+                        "repartidor_asignado": e[2],
+                        "estado_envio": e[3]
+                    })
+            
+        return jsonify(lista_envios), 200
+        
+    except Exception as e:
+        return jsonify({"error": f"Error al consultar el glaciar de envíos: {str(e)}"}), 500

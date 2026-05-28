@@ -1,0 +1,12 @@
+$kind: http-request
+url: http://127.0.0.1:5001/auth/register
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "username": "lorenzo_dev",
+      "password": "mi_clave_segura",
+      "rol": "admin"
+    }
+order: 1000

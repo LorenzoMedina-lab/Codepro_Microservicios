@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import request, jsonify
 
-JWT_SECRET = os.getenv("JWT_SECRET", "pinguino_secreto_super_seguro")
+JWT_SECRET = os.environ.get("JWT_SECRET")
 JWT_ALGORITHM = "HS256"
 
 def generar_token_jwt(usuario_id: int, rol: str) -> str:

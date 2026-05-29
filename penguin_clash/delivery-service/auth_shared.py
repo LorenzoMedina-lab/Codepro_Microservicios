@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone #Importa clases para manejar 
 from functools import wraps #Importa wraps para crear decoradores que preserven la firma original de las funciones decoradas.
 from flask import request, jsonify #Importa request y jsonify de Flask para manejar solicitudes HTTP y respuestas JSON.
 
-JWT_SECRET = os.getenv("JWT_SECRET", "pinguino_secreto_super_seguro") #Clave secreta para firmar los tokens JWT, obtenida de una variable de entorno o con un valor por defecto para desarrollo. En producción, esta clave debe ser segura y no compartida.
+JWT_SECRET = os.environ.get("JWT_SECRET") #Clave secreta para firmar los tokens JWT, obtenida de una variable de entorno o con un valor por defecto para desarrollo. En producción, esta clave debe ser segura y no compartida.
 JWT_ALGORITHM = "HS256" #Algoritmo de firma para los tokens JWT, utilizando HMAC con SHA-256.
 
 def generar_token_jwt(usuario_id: int, rol: str) -> str: #Agrega el rol al token para futuras autorizaciones basadas en roles

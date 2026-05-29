@@ -39,7 +39,7 @@ def procesar_y_crear_pedido(usuario_contexto): # El contexto del usuario se inye
     cantidad = datos.get('cantidad') # Extracción de parámetros con manejo de casos donde no se proporcionan o son del tipo incorrecto
     
     # Extrae el ID usando la clave exacta inyectada por tu decorador
-    usuario_id = usuario_contexto.get('usuario_id') 
+    usuario_id = usuario_contexto.get('sub') or usuario_contexto.get('usuario_id') 
 
     # Validación de entrada con mensajes de error claros y códigos HTTP adecuados
     if producto_id is None or cantidad is None:

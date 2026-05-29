@@ -60,7 +60,7 @@ def autenticar_usuario_y_entregar_token():
         
     return jsonify({"error": "Credenciales invalidas en el backend"}), 401
 
-# Ruta protegida para listar todos los usuarios (solo para administradores)
+# Ruta protegida para listar todos los usuarios solo accesible con token JWT válido.
 @auth_blueprint.route('/usuarios', methods=['GET'])
 @requerir_token_autenticado  # Protegido por seguridad
 def listar_todos_los_usuarios(usuario_contexto):

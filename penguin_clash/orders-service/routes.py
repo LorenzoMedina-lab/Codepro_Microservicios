@@ -17,7 +17,7 @@ def comunicarse_con_inventario_con_reintentos(url: str, json_data: dict, headers
             if intento == reintentos_maximos - 1:
                 raise
             time.sleep(1) # Espera un segundo antes de reintentar
-
+# Endpoint para crear un nuevo pedido, protegido por autenticación JWT.
 @orders_blueprint.route('/pedidos', methods=['POST'])
 @requerir_token_autenticado
 def procesar_y_crear_pedido(usuario_contexto):

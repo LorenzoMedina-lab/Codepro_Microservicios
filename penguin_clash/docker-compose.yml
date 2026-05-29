@@ -1,17 +1,27 @@
-version: '3.8'
+version: '3.8' # Especifica la versión del motor de Docker Compose
 
+#  RED VIRTUAL (Aislamiento de tráfico)
 networks:
   red-glacial:
-    driver: bridge
+    driver: bridge # Crea un conmutador virtual aislado para comunicación interna por DNS
+
+#  VOLÚMENES NOMBRADOS (Persistencia de datos en disco)
+volumes:
+  datos-db-auth:       # Respaldo físico independiente para las credenciales
+  datos-db-inventory:  # Respaldo físico independiente para el stock
+  datos-db-orders:     # Respaldo físico independiente para las órdenes de compra
+  datos-db-delivery:   # Respaldo físico independiente para la logística
 
 services:
-  # --- INFRAESTRUCTURA DE BASES DE DATOS ---
+  #  CAPA DE PERSISTENCIA (Bases de datos aisladas - Database per Service)
   db-auth:
-    image: postgres:15-alpine
+    image: postgres:15-alpine # Motor relacional ligero basado en Alpine Linux
     environment:
       POSTGRES_USER: user_auth
-      POSTGRES_PASSWORD: ${DB_PASSWORD_GLOBAL}
+      POSTGRES_PASSWORD: ${DB_PASSWORD_GLOBAL} # Inyección segura desde el archivo .env
       POSTGRES_DB: db_auth
+    volumes:
+      - datos-db-auth:/var/lib/postgresql/data # Mapeo para evitar la volatilidad de datos
     networks:
       - red-glacial
 
@@ -21,6 +31,8 @@ services:
       POSTGRES_USER: user_inventory
       POSTGRES_PASSWORD: ${DB_PASSWORD_GLOBAL}
       POSTGRES_DB: db_inventory
+    volumes:
+      - datos-db-inventory:/var/lib/postgresql/data
     networks:
       - red-glacial
 
@@ -30,6 +42,8 @@ services:
       POSTGRES_USER: user_orders
       POSTGRES_PASSWORD: ${DB_PASSWORD_GLOBAL}
       POSTGRES_DB: db_orders
+    volumes:
+      - datos-db-orders:/var/lib/postgresql/data
     networks:
       - red-glacial
 
@@ -39,21 +53,23 @@ services:
       POSTGRES_USER: user_delivery
       POSTGRES_PASSWORD: ${DB_PASSWORD_GLOBAL}
       POSTGRES_DB: db_delivery
+    volumes:
+      - datos-db-delivery:/var/lib/postgresql/data
     networks:
       - red-glacial
 
-  # --- MICROSERVICIOS APLICATIVOS ---
+  # 🐧 CAPA APLICATIVA (Microservicios en Flask)
   auth-service:
     build:
-      context: ./auth-service
+      context: ./auth-service # Ruta al Dockerfile local del servicio
     ports:
-      - "5001:5001"
+      - "5001:5001" # Mapeo: Puerto de salida Host : Puerto interno Contenedor
     environment:
       - PORT=5001
-      - DATABASE_URL=postgresql://user_auth:${DB_PASSWORD_GLOBAL}@db-auth:5432/db_auth
-      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=postgresql://user_auth:${DB_PASSWORD_GLOBAL}@db-auth:5432/db_auth # DNS interno 'db-auth'
+      - JWT_SECRET=${JWT_SECRET} # Clave simétrica para firma y verificación de tokens
     depends_on:
-      - db-auth
+      - db-auth # Garantiza que la base de datos inicie antes que la app
     networks:
       - red-glacial
 
@@ -71,7 +87,7 @@ services:
     networks:
       - red-glacial
 
-  orders-service:  # <--- CORREGIDO: Alineado perfectamente bajo services
+  orders-service:
     build:
       context: ./orders-service
     ports:
@@ -79,13 +95,13 @@ services:
     environment:
       - PORT=5003
       - DATABASE_URL=postgresql://user_orders:${DB_PASSWORD_GLOBAL}@db-orders:5432/db_orders
-      - INVENTORY_SERVICE_URL=http://inventory-service:5002
-      - DELIVERY_SERVICE_URL=http://delivery-service:5004
+      - INVENTORY_SERVICE_URL=http://inventory-service:5002 # URL desacoplada para comunicación HTTP sincrónica
+      - DELIVERY_SERVICE_URL=http://delivery-service:5004   # URL desacoplada para gatillar la logística
       - JWT_SECRET=${JWT_SECRET}
     depends_on:
       - db-orders
       - inventory-service
-      - delivery-service
+      - delivery-service # Bloquea el inicio hasta que sus dependencias de red estén listas
     networks:
       - red-glacial
 

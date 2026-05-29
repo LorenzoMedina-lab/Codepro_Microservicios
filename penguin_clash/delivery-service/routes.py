@@ -4,7 +4,7 @@ from auth_shared import requerir_token_autenticado
 import random
 
 delivery_blueprint = Blueprint('delivery', __name__)
-
+# Endpoint para agendar el despacho de hielo, protegido por autenticación JWT.
 @delivery_blueprint.route('/envios', methods=['POST'])
 @requerir_token_autenticado
 def agendar_despacho_de_hielo(usuario_contexto):
@@ -33,7 +33,7 @@ def agendar_despacho_de_hielo(usuario_contexto):
         "estado_logistica": "PREPARANDO_CARGA",
         "mensaje": "Logistica activada. El hielo esta en camino antes de licuarse."
     }), 201
-
+# Endpoint para listar todos los envíos, protegido por autenticación JWT.
 @delivery_blueprint.route('/envios', methods=['GET'])
 @requerir_token_autenticado  # Barrera de seguridad JWT activa
 def listar_todos_los_envios(usuario_contexto): # Recibe el contexto del token de forma obligatoria

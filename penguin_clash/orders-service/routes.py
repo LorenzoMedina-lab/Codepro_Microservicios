@@ -1,17 +1,17 @@
-import time
-import logging
-import requests
-from flask import Blueprint, request, jsonify
-from models import obtener_conexion_db
-from auth_shared import requerir_token_autenticado
-from config import INVENTORY_SERVICE_URL
+import time # Importación de time para implementar esperas entre reintentos en la comunicación con servicios externos
+import logging # Importación de logging para implementar un sistema de logueo robusto que facilite el monitoreo y la depuración del servicio de pedidos
+import requests # Importación de requests para realizar llamadas HTTP a servicios externos como el servicio de inventario y logística
+from flask import Blueprint, request, jsonify # Importación de Blueprint para organizar las rutas, request para manejar las solicitudes entrantes y jsonify para formatear las respuestas JSON
+from models import obtener_conexion_db # Importación de la función para obtener una conexión a la base de datos local, que se utilizará para persistir los pedidos
+from auth_shared import requerir_token_autenticado # Importación del decorador para validar el token JWT y extraer el contexto del usuario, asegurando que solo usuarios autenticados puedan acceder a los endpoints de pedidos
+from config import INVENTORY_SERVICE_URL # Importación de la URL del servicio de inventario desde el archivo de configuración, lo que permite una fácil modificación sin necesidad de cambiar el código fuente.
 
 # Configuración básica de logging para monitoreo y depuración
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s') # Configuración del formato de los logs para incluir timestamp, nivel de log y mensaje.
 
 # Definición del Blueprint para organizar las rutas relacionadas con pedidos
-orders_blueprint = Blueprint('orders', __name__)
+orders_blueprint = Blueprint('orders', __name__) 
 
 # Función auxiliar para implementar política de reintentos al comunicarse con el servicio de inventario
 def comunicarse_con_inventario_con_reintentos(url: str, json_data: dict, headers: dict, reintentos_maximos=3):
@@ -27,7 +27,7 @@ def comunicarse_con_inventario_con_reintentos(url: str, json_data: dict, headers
         except requests.exceptions.RequestException as e:
             logging.warning(f"Intento {intento + 1} falló debido a problemas de red: {str(e)}")
             if intento == reintentos_maximos - 1:
-                raise # Repercute la excepción si se agotaron los cartuchos
+                raise # Si se agotaron los reintentos, se lanza la excepción para que el endpoint maneje la falla de forma adecuada
             time.sleep(1) # Espera un segundo de gracia antes de reintentar
 
 # Endpoint principal para procesar la creación de un pedido con validación de autenticación y manejo robusto de fallas

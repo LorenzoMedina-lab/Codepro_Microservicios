@@ -1,19 +1,19 @@
-import os
-import jwt
-from datetime import datetime, timedelta, timezone
+import os # Agregado para manejar variables de entorno, como el secreto para JWT.
+import jwt # Agregado para manejar la generación y validación de tokens JWT. Asegúrate de tener la biblioteca PyJWT instalada (pip install PyJWT).
+from datetime import datetime, timedelta, timezone # Agregado para manejar fechas y horas, especialmente para establecer la expiración de los tokens JWT.
 from functools import wraps
 from flask import request, jsonify
 
-JWT_SECRET = os.environ.get("JWT_SECRET")
-JWT_ALGORITHM = "HS256"
+JWT_SECRET = os.environ.get("JWT_SECRET") # Es importante que JWT_SECRET se defina en las variables de entorno para garantizar la seguridad de los tokens JWT.
+JWT_ALGORITHM = "HS256" # Algoritmo de firma para los tokens JWT. HS256 es un algoritmo de firma simétrica que utiliza el secreto definido en JWT_SECRET para firmar y verificar los tokens.
 
-def generar_token_jwt(usuario_id: int, rol: str) -> str:
+def generar_token_jwt(usuario_id: int, rol: str) -> str: # Función para generar un token JWT con la información del usuario (ID y rol) y una expiración de 2 horas.
     """Genera un token JWT con expiración de 2 horas."""
     payload = {
-        "exp": datetime.now(timezone.utc) + timedelta(hours=2),
-        "iat": datetime.now(timezone.utc),
-        "sub": usuario_id,
-        "rol": rol
+        "exp": datetime.now(timezone.utc) + timedelta(hours=2), # Establece la expiración del token a 2 horas a partir del momento de su creación.
+        "iat": datetime.now(timezone.utc), # Establece la fecha de emisión del token al momento actual.
+        "sub": usuario_id, # El "sub" (subject) del token se establece como el ID del usuario, lo que permite identificar al usuario asociado con el token.
+        "rol": rol # Agrega el rol del usuario al payload del token, lo que puede ser útil para implementar control de acceso basado en roles en los endpoints protegidos.
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
@@ -40,4 +40,4 @@ def requerir_token_autenticado(funcion_original):
             return jsonify({"error": f"Token invalido o expirado: {str(error_jwt)}"}), 401
             
         return funcion_original(*args, **kwargs)
-    return decorador_funcion
+    return decorador_funcion # Decorator para proteger endpoints REST. Valida el Bearer token.

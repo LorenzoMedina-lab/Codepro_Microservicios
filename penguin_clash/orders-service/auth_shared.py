@@ -1,8 +1,8 @@
 import os # Agregado para manejar variables de entorno, como el secreto para JWT.
 import jwt # Agregado para manejar la generación y validación de tokens JWT. Asegúrate de tener la biblioteca PyJWT instalada (pip install PyJWT).
 from datetime import datetime, timedelta, timezone # Agregado para manejar fechas y horas, especialmente para establecer la expiración de los tokens JWT.
-from functools import wraps
-from flask import request, jsonify
+from functools import wraps # Agregado para crear decoradores, como el decorador de autenticación que se utiliza para proteger los endpoints REST.
+from flask import request, jsonify # Agregado para manejar las solicitudes HTTP y las respuestas JSON en los endpoints REST.
 
 JWT_SECRET = os.environ.get("JWT_SECRET") # Es importante que JWT_SECRET se defina en las variables de entorno para garantizar la seguridad de los tokens JWT.
 JWT_ALGORITHM = "HS256" # Algoritmo de firma para los tokens JWT. HS256 es un algoritmo de firma simétrica que utiliza el secreto definido en JWT_SECRET para firmar y verificar los tokens.
